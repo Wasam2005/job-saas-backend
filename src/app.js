@@ -1,6 +1,10 @@
-import express, { response } from 'express'
-const app=express();
+import express from 'express';
+import User from './models/User.js';
 
-export default app.get('/health', (req,res)=>{
-   res.json({ status: "OK" });
-})
+const app = express();
+
+app.get('/test-user', async (req, res) => {
+   
+});
+
+export default app;
