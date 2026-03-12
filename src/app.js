@@ -1,10 +1,8 @@
 import express from 'express';
-import User from './models/User.js';
-
+import authRoutes from "./routes/authRoutes.js";
 const app = express();
 
-app.get('/test-user', async (req, res) => {
-   
-});
+app.use(express.json());
 
+app.use("/api/auth", authRoutes);
 export default app;
