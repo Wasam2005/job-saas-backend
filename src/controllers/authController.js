@@ -4,6 +4,7 @@ import { createUser,authenticateUser } from "../services/authService.js";
 
 export const registerUser = async (req,res) =>
 {
+
 let {name , email , password} = req.body ;
 name = name?.trim();
 email = email?.trim().toLowerCase();
