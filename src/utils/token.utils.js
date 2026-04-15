@@ -1,0 +1,9 @@
+import crypto from "crypto";
+
+export const generateRefreshToken = () => {
+return crypto.randomBytes(40).toString("hex");
+}
+
+export const hashToken = (token) => {
+  return crypto.createHash("sha256").update(token).digest("hex");
+};

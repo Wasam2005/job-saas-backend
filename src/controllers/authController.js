@@ -55,17 +55,18 @@ password = password?.trim();
   }
 
   try {
-    const token = await authenticateUser({ email, password });
-
+    const {accessToken,refreshToken}= await authenticateUser({ email, password });
+   
     return res.status(200).json({
       success: true,
       data: {
-        token,
+        accessToken,
+        refreshToken
       },
       message: "User logged in successfully",
     });
   } catch (error) {
-     
+     console.log(error);
     if (error.message === "INVALID_CREDENTIAL") {
       return res.status(401).json({
         success: false,

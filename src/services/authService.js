@@ -1,14 +1,15 @@
 import bcrypt from "bcrypt";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
-
+import RefreshToken from "../models/RefreshToken.js";
+import { generateRefreshToken,hashToken } from "../utils/token.utils.js";
 export const createUser= async({name,email,password}) => {
     const existingUser = await User.findOne({email});
     if(existingUser){
         throw new Error("USER_EXISTS");
     }
     const  hashedPassword  = await bcrypt.hash(password,10);
-
+   
     const user = new User ({
         name,
         email,
@@ -22,6 +23,7 @@ export const createUser= async({name,email,password}) => {
 export const authenticateUser = async ({ email, password }) => {
   const existingUser = await User.findOne({ email });
 
+
   if (!existingUser) {
     throw new Error("INVALID_CREDENTIAL");
   }
@@ -32,7 +34,8 @@ export const authenticateUser = async ({ email, password }) => {
     throw new Error("INVALID_CREDENTIAL");
   }
 
-  const token = jwt.sign(
+
+  const accessToken = jwt.sign(
     {
       userId: existingUser._id,
     },
@@ -41,6 +44,19 @@ export const authenticateUser = async ({ email, password }) => {
       expiresIn: "1h",
     }
   );
+  const rawRefreshToken = generateRefreshToken();
+  const hashedToken = hashToken(rawRefreshToken);
+  const expiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  
+await RefreshToken.create({
+  userId: existingUser._id,
+  token: hashedToken,
+  expiresAt: expiry,
+});
 
-  return token;
+return {
+  accessToken,
+  refreshToken: rawRefreshToken
+}
+  
 };
