@@ -1,5 +1,5 @@
 import { createUser,authenticateUser,refreshTokenService} from "../services/authService.js";
-
+import { logWarn, logError, logInfo } from "../utils/logger.js";
 //User registeration controller
 
 export const registerUser = async (req,res) =>
@@ -8,20 +8,44 @@ export const registerUser = async (req,res) =>
 let {name , email , password} = req.body ;
 name = name?.trim();
 email = email?.trim().toLowerCase();
-password = password?.trim();
-if(!name || !email || !password){
-   return res.status(400).json({
-     success: false,
-     message: "All fields are required"})
-}
-if (password.length < 8 || password.length > 128) {
+
+if (
+  !name ||
+  !email ||
+  !password ||
+  typeof password !== "string"
+) {
+  logWarn("register_validation_failed", {
+    reason: "missing_or_invalid_required_fields",
+    message: "Registration request contains invalid required fields",
+  });
+
   return res.status(400).json({
     success: false,
-    message: "Password must be between 8 and 128 characters"
-  });}
+    message: "All fields are required",
+  });
+}
+
+
+if (password.length < 8 || password.length > 128) {
+  logWarn("register_validation_failed", {
+    reason: "invalid_password_length",
+    message: "Password length validation failed",
+  });
+
+  return res.status(400).json({
+    success: false,
+    message: "Password must be between 8 and 128 characters",
+  });
+}
 
 try{
 await createUser({name , email , password});
+
+logInfo("register_success", {
+  email,
+  message: "User registered successfully",
+});
 return res.status(201).json({
   success: true,
   message: "User registered successfully"})
@@ -29,11 +53,22 @@ return res.status(201).json({
 catch(error){
    
 if(error.message==="USER_EXISTS"){
+    logWarn("register_failed", {
+    email,
+    reason: "user_already_exists",
+    message: "Registration failed due to duplicate user",
+  });
     return res.status(409).json({
       success: false,
       message: "User already exists"});
      
 }
+
+logError("register_server_error", {
+  email,
+  reason: error.message,
+  message: "Unexpected server error during registration",
+});
 return res.status(500).json({
   success: false,
   message: "Server error"});
@@ -46,8 +81,13 @@ export const loginUser = async (req, res) => {
   let { email, password } = req.body;
 
   email = email?.trim().toLowerCase();
-password = password?.trim();
-  if (!email || !password) {
+ 
+  if (!email || !password || typeof password !== "string") {
+      logWarn("login_validation_failed", {
+     reason: "missing_or_invalid_required_fields",
+    message: "Login request contains invalid required fields",
+  });
+
     return res.status(400).json({
       success: false,
       message: "Email and password are required",
@@ -68,6 +108,10 @@ if (process.env.NODE_ENV === "production" && refreshToken) {
   maxAge: 7 * 24 * 60 * 60 * 1000,
 });
 
+logInfo("login_success", {
+  email,
+  message: "User logged in successfully",
+});
     return res.status(200).json({
       success: true,
       data: {
@@ -77,13 +121,20 @@ if (process.env.NODE_ENV === "production" && refreshToken) {
       message: "User logged in successfully",
     });
   } catch (error) {
-   
-    if (error.message === "INVALID_CREDENTIAL") {
+
+    if (error.message === "USER_NOT_FOUND" || error.message === "PASSWORD_MISMATCH" ) {
+
       return res.status(401).json({
         success: false,
         message: "Invalid credentials",
       });
     }
+
+    logError("login_server_error", {
+  email,
+  reason: error.message,
+  message: "Unexpected server error during login",
+});
 
     return res.status(500).json({
       success: false,
@@ -96,14 +147,16 @@ if (process.env.NODE_ENV === "production" && refreshToken) {
 export const refreshAccessToken = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
-    console.log("Cookies:", req.cookies);
+   
     if (!refreshToken) {
-      console.log("no token");
-      return res.status(401).json({
-        success: false,
-        message: "No refresh token",
-      });
-    }
+    logWarn("refresh_token_missing", {
+  message: "Refresh token cookie missing",
+});
+  return res.status(401).json({
+    success: false,
+    message: "Unauthorized",
+  });
+}
 
     const result = await refreshTokenService(refreshToken);
 
@@ -115,29 +168,30 @@ export const refreshAccessToken = async (req, res) => {
       sameSite: "strict",
     });
 
-   return res.status(200).json({
+  
+
+  return res.status(200).json({
   success: true,
   data: {
     accessToken: result.accessToken,
   },
+  message: "Token refreshed successfully",
 });
 
   } catch (error) {
    
 
-    if (error.message === "Unauthorized") {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
-    }
+ if(error.message === "UNAUTHORIZED" || error.message === "EXPIRED") {
+  return res.status(401).json({
+    success: false,
+    message: "Unauthorized",
+  });
+}
 
-    if (error.message === "EXPIRED") {
-      return res.status(401).json({
-        success: false,
-        message: "Token expired",
-      });
-    }
+ logError("refresh_token_server_error", {
+      reason: error.message,
+      message: "Unexpected server error during refresh token flow",
+    });
 
     return res.status(500).json({
       success: false,

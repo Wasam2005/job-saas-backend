@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import { logWarn, logError, logInfo } from "../utils/logger.js";
 
 export const authMiddleware = async (req, res, next) => {
   try {
@@ -7,6 +8,9 @@ export const authMiddleware = async (req, res, next) => {
 
     // 1. Header must exist
     if (!authHeader) {
+      logWarn("auth_header_missing", {
+  reason: "authorization_header_missing",
+});
       return res.status(401).json({
         success: false,
         message: "Unauthorized",
@@ -17,6 +21,9 @@ export const authMiddleware = async (req, res, next) => {
     const parts = authHeader.split(" ");
 
     if (parts.length !== 2 || parts[0] !== "Bearer" || !parts[1]) {
+      logWarn("invalid_auth_header", {
+  reason: "invalid_bearer_format",
+});
       return res.status(401).json({
         success: false,
         message: "Unauthorized",
@@ -30,7 +37,9 @@ export const authMiddleware = async (req, res, next) => {
 
     // 4. Validate payload
     if (!decoded.userId) {
-         
+    logWarn("jwt_verification_failed", {
+    reason: "missing_userId_in_payload",
+  });
       return res.status(401).json({
         success: false,
         message: "Unauthorized",
@@ -44,7 +53,9 @@ export const authMiddleware = async (req, res, next) => {
 
     // 6. Validate user
     if (!user ) {
-         console.log(user);
+      logWarn("unauthorized_access_attempt", {
+  reason: "user_not_found",
+});
       return res.status(401).json({
         success: false,
         message: "Unauthorized",
@@ -61,11 +72,30 @@ export const authMiddleware = async (req, res, next) => {
     // 8. Continue request
     next();
 
-  } catch (error) {
-        console.log(error.message);
+  }
+ catch (error) {
+  if (
+    error.name === "JsonWebTokenError" ||
+    error.name === "TokenExpiredError"
+  ) {
+    logWarn("jwt_verification_failed", {
+      reason: error.message,
+    });
+
     return res.status(401).json({
       success: false,
       message: "Unauthorized",
     });
   }
+
+  logError("auth_middleware_server_error", {
+    errorName: error.name,
+    reason: error.message,
+  });
+
+  return res.status(500).json({
+    success: false,
+    message: "Server error",
+  });
+}
 };

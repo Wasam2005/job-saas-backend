@@ -3,6 +3,7 @@ import User from "../models/User.js";
 import RefreshToken from "../models/RefreshToken.js";
 import {hashToken } from "../utils/token.utils.js";
 import { issueTokens } from "../utils/token.utils.js";
+import { logWarn, logError, logInfo } from "../utils/logger.js";
 
 export const createUser= async({name,email,password}) => {
     const existingUser = await User.findOne({email});
@@ -25,16 +26,24 @@ export const authenticateUser = async ({ email, password }) => {
   const existingUser = await User.findOne({ email });
 
 
-  if (!existingUser) {
-    throw new Error("INVALID_CREDENTIAL");
-  }
+ if (!existingUser) {
+  logWarn("login_auth_failed", {
+  email,
+  reason: "USER_NOT_FOUND",
+});
+  throw new Error("USER_NOT_FOUND");
+}
+
 
   const isMatch = await bcrypt.compare(password, existingUser.password);
 
   if (!isMatch) {
-    throw new Error("INVALID_CREDENTIAL");
-  }
-
+    logWarn("login_auth_failed", {
+  email,
+  reason: "PASSWORD_MISMATCH",
+});
+  throw new Error("PASSWORD_MISMATCH");
+}
 
 
 const {accessToken,rawRefreshToken,hashedToken,expiresAt} = issueTokens(existingUser._id);
@@ -60,14 +69,30 @@ export const refreshTokenService = async (refreshToken) => {
   });
 
   if (!existingToken) {
-    
-    throw new Error("Unauthorized");
+      logWarn("refresh_token_reuse_detected", {
+    reason: "token_not_found",
+    message: "Refresh token reuse or invalid token detected",
+  });
+
+    throw new Error("UNAUTHORIZED");
   }
   const user = await User.findById(existingToken.userId);
 
-if (!user) throw new Error("UNAUTHORIZED");
+if (!user){
+   logWarn("refresh_user_not_found", {
+    userId: existingToken.userId,
+    reason: "user_deleted_or_missing",
+  });
+
+  throw new Error("UNAUTHORIZED");
+} 
 
   if (existingToken.expiresAt < new Date()) {
+     logWarn("refresh_token_expired", {
+    userId: existingToken.userId,
+    reason: "refresh_token_expired",
+  });
+
     await RefreshToken.deleteOne({ _id: existingToken._id });
     throw new Error("EXPIRED");
   }
@@ -82,7 +107,10 @@ if (!user) throw new Error("UNAUTHORIZED");
     token: hashedToken,
     expiresAt,
   });
-
+logInfo("refresh_token_rotated", {
+  userId: user._id,
+  message: "Refresh token rotated successfully",
+});
   return {
     accessToken,
     refreshToken: rawRefreshToken,
