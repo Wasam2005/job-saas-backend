@@ -3,7 +3,7 @@ import User from "../models/User.js";
 import RefreshToken from "../models/RefreshToken.js";
 import {hashToken } from "../utils/token.utils.js";
 import { issueTokens } from "../utils/token.utils.js";
-import { logWarn, logError, logInfo } from "../utils/logger.js";
+import { logWarn, logError, logInfo } from "../utils/logger.utils.js";
 
 export const createUser= async({name,email,password}) => {
     const existingUser = await User.findOne({email});

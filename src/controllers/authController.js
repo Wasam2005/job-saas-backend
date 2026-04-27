@@ -1,47 +1,12 @@
 import { createUser,authenticateUser,refreshTokenService} from "../services/authService.js";
-import { logWarn, logError, logInfo } from "../utils/logger.js";
-//User registeration controller
+import { logWarn, logError, logInfo } from "../utils/logger.utils.js";
 
+//User registeration controller
 export const registerUser = async (req,res) =>
 {
-
 let {name , email , password} = req.body ;
-name = name?.trim();
-email = email?.trim().toLowerCase();
-
-if (
-  !name ||
-  !email ||
-  !password ||
-  typeof password !== "string"
-) {
-  logWarn("register_validation_failed", {
-    reason: "missing_or_invalid_required_fields",
-    message: "Registration request contains invalid required fields",
-  });
-
-  return res.status(400).json({
-    success: false,
-    message: "All fields are required",
-  });
-}
-
-
-if (password.length < 8 || password.length > 128) {
-  logWarn("register_validation_failed", {
-    reason: "invalid_password_length",
-    message: "Password length validation failed",
-  });
-
-  return res.status(400).json({
-    success: false,
-    message: "Password must be between 8 and 128 characters",
-  });
-}
-
 try{
 await createUser({name , email , password});
-
 logInfo("register_success", {
   email,
   message: "User registered successfully",
@@ -76,31 +41,11 @@ return res.status(500).json({
 };
 
 // User Login controller
-
 export const loginUser = async (req, res) => {
   let { email, password } = req.body;
-
-  email = email?.trim().toLowerCase();
- 
-  if (!email || !password || typeof password !== "string") {
-      logWarn("login_validation_failed", {
-     reason: "missing_or_invalid_required_fields",
-    message: "Login request contains invalid required fields",
-  });
-
-    return res.status(400).json({
-      success: false,
-      message: "Email and password are required",
-    });
-  }
-
   try {
     const {accessToken,refreshToken}= await authenticateUser({ email, password });
 
-        const isDev = process.env.NODE_ENV !== "production";
-if (process.env.NODE_ENV === "production" && refreshToken) {
-  console.warn("Refresh token should NOT be in response in production");
-}
    res.cookie("refreshToken", refreshToken, {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
@@ -116,7 +61,7 @@ logInfo("login_success", {
       success: true,
       data: {
         accessToken,
-        ...(isDev && { refreshToken }), 
+       
       },
       message: "User logged in successfully",
     });
