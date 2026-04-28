@@ -18,15 +18,9 @@ return res.status(201).json({
 catch(error){
    
 if(error.message==="USER_EXISTS"){
-    logWarn("register_failed", {
-    email,
-    reason: "user_already_exists",
-    message: "Registration failed due to duplicate user",
-  });
     return res.status(409).json({
       success: false,
       message: "User already exists"});
-     
 }
 
 logError("register_server_error", {
@@ -61,7 +55,6 @@ logInfo("login_success", {
       success: true,
       data: {
         accessToken,
-       
       },
       message: "User logged in successfully",
     });
@@ -124,7 +117,6 @@ export const refreshAccessToken = async (req, res) => {
 });
 
   } catch (error) {
-   
 
  if(error.message === "UNAUTHORIZED" || error.message === "EXPIRED") {
   return res.status(401).json({

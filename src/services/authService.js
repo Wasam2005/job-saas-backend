@@ -8,24 +8,26 @@ import { logWarn, logError, logInfo } from "../utils/logger.utils.js";
 export const createUser= async({name,email,password}) => {
     const existingUser = await User.findOne({email});
     if(existingUser){
+       logWarn("register_failed", {
+    email,
+    reason: "user_already_exists",
+    message: "Registration failed due to duplicate user",
+  });
         throw new Error("USER_EXISTS");
     }
     const  hashedPassword  = await bcrypt.hash(password,10);
    
-    const user = new User ({
-        name,
-        email,
-        password:hashedPassword,
-    })
-   await user.save();
+ const user = await User.create({
+  name,
+  email,
+  password: hashedPassword,
+});
    return user;
 };
 
 
 export const authenticateUser = async ({ email, password }) => {
   const existingUser = await User.findOne({ email });
-
-
  if (!existingUser) {
   logWarn("login_auth_failed", {
   email,
