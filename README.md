@@ -1,10 +1,10 @@
-# 🚀 Multi-Tenant ATS SaaS Backend
+# Multi-Tenant ATS SaaS Backend
 
 A **production-grade backend system** for a Multi-Tenant Applicant Tracking System (ATS) designed to solve real-world hiring workflow problems using scalable architecture, strict tenant isolation, and secure authentication.
 
 ---
 
-## 📌 Problem Statement
+## Problem Statement
 
 Modern hiring workflows are fragmented across:
 
@@ -20,11 +20,11 @@ This leads to:
 * weak pipeline control
 * lack of analytics
 
-👉 This system centralizes the entire hiring lifecycle into a **single scalable backend platform**.
+ This system centralizes the entire hiring lifecycle into a **single scalable backend platform**.
 
 ---
 
-## 🔥 Key Highlights
+##  Key Highlights
 
 * 🏢 Multi-tenant architecture with strict organization isolation
 * 🔐 Secure JWT authentication with refresh token rotation & hashing
