@@ -36,7 +36,7 @@ This leads to:
 
 ---
 
-## 🏗 Architecture Overview
+## Architecture Overview
 
 ### Multi-Tenant Core Design
 
@@ -72,7 +72,7 @@ Principles:
 
 ---
 
-## 🔐 Authentication & Security
+##  Authentication & Security
 
 * JWT-based authentication
 * Short-lived access tokens
@@ -84,7 +84,7 @@ Principles:
 
 ---
 
-## 🧩 Role-Based Access Control (RBAC)
+##  Role-Based Access Control (RBAC)
 
 ### Roles
 
@@ -111,7 +111,7 @@ Principles:
 
 ---
 
-## 🏢 Multi-Tenant Design
+##  Multi-Tenant Design
 
 * Every user belongs to exactly **one organization**
 * All queries must include `organizationId`
@@ -121,7 +121,7 @@ Principles:
 
 ---
 
-## ⚙️ Tenant Onboarding Flow
+##  Tenant Onboarding Flow
 
 Registration is not just user creation.
 
@@ -154,7 +154,7 @@ user creation fails
 
 ➡️ Leads to broken tenant (orphan data)
 
-### ✅ Solution
+### Solution
 
 * MongoDB transactions (planned)
 * Ensures:
@@ -165,7 +165,7 @@ all succeed OR all rollback
 
 ---
 
-## 🧱 Data Modeling Strategy
+## Data Modeling Strategy
 
 * Primary: **Referential modeling**
 * Selective embedding for tightly coupled data
@@ -178,7 +178,7 @@ all succeed OR all rollback
 
 ---
 
-## 🧠 Engineering Decisions
+## Engineering Decisions
 
 ### Why MongoDB?
 
@@ -239,7 +239,7 @@ Used across:
 
 ---
 
-## 📌 Current Status
+## Current Status
 
 ### ✅ Completed
 
@@ -274,7 +274,7 @@ Used across:
 
 ---
 
-## 📚 Detailed Documentation
+## Detailed Documentation
 
 For deeper architecture insights:
 
@@ -282,7 +282,7 @@ For deeper architecture insights:
 
 ---
 
-## 💡 Engineering Philosophy
+## Engineering Philosophy
 
 * Security-first design
 * No shallow CRUD
@@ -292,7 +292,7 @@ For deeper architecture insights:
 
 ---
 
-## ⭐ Final Note
+## Final Note
 
 This project is designed to demonstrate:
 
@@ -302,6 +302,6 @@ This project is designed to demonstrate:
 
 ---
 
-## 📬 Contact
+## Contact
 
 If you want to discuss system design, backend engineering, or collaboration, feel free to reach out.
