@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
-import User from "../models/User.js";
-import { logWarn, logError, logInfo } from "../utils/logger.utils.js";
+import User from "../models/user.model.js";
+import { logWarn, logError, logInfo } from "../utils/logger.util.js";
 
 export const authMiddleware = async (req, res, next) => {
   try {

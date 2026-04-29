@@ -6,6 +6,14 @@ export const isNonEmptyString = (value) => {
   return true;
 };
 
+export const isValidCompanyDomain = (value) => {
+  const normalizedValue = value.trim().toLowerCase();
+
+  const domainRegex = /^[a-z0-9.-]+\.[a-z]{2,}$/;
+
+  return domainRegex.test(normalizedValue);
+};
+
 export const isValidEmail = (email) => {
   if (!isNonEmptyString(email)) return false;
 

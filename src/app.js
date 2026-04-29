@@ -1,5 +1,5 @@
 import express from 'express';
-import authRoutes from "./routes/authRoutes.js";
+import authRoutes from "./routes/auth.routes.js";
 import cookieParser from "cookie-parser";
 
 const app = express();

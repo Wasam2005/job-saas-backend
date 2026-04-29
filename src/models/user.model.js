@@ -23,15 +23,21 @@ const userSchema = new Schema(
       required: true,
     },
 
+    organizationId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Organization",
+  required: true,
+  index: true,
+},
+
     role: {
       type: String,
       enum: ["owner", "admin", "recruiter", "interviewer"],
       default: "recruiter",
+      required: true,
     },
   },
   { timestamps: true }
 );
 
-const User = mongoose.model("User", userSchema);
-
-export default User;
+export default mongoose.model("User", userSchema);

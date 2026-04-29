@@ -1,12 +1,12 @@
-import { createUser,authenticateUser,refreshTokenService} from "../services/authService.js";
-import { logWarn, logError, logInfo } from "../utils/logger.utils.js";
+import { createOrganizationWithOwner,authenticateUser,refreshTokenService} from "../services/auth.service.js";
+import { logWarn, logError, logInfo } from "../utils/logger.util.js";
 
 //User registeration controller
 export const registerUser = async (req,res) =>
 {
-let {name , email , password} = req.body ;
+let {name , email , password,organizationName,companyDomain } = req.body ;
 try{
-await createUser({name , email , password});
+await createOrganizationWithOwner({name , email , password,organizationName ,companyDomain});
 logInfo("register_success", {
   email,
   message: "User registered successfully",
@@ -21,6 +21,13 @@ if(error.message==="USER_EXISTS"){
     return res.status(409).json({
       success: false,
       message: "User already exists"});
+}
+
+if (error.message === "ORGANIZATION_ALREADY_EXISTS") {
+  return res.status(409).json({
+    success: false,
+    message: "Organization already exists",
+  });
 }
 
 logError("register_server_error", {

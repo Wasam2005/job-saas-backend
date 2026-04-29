@@ -1,4 +1,4 @@
-import { logWarn } from "../utils/logger.utils.js";
+import { logWarn } from "../utils/logger.util.js";
 
 export const authorizeRoles = (...allowedRoles) =>{
 return (req,res,next) =>{
