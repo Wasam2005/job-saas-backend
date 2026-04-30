@@ -18,12 +18,22 @@ return res.status(201).json({
 catch(error){
    
 if(error.message==="USER_EXISTS"){
+     logWarn("register_failed", {
+    email,
+    reason: "user_already_exists",
+    message: "Registration failed due to duplicate user",
+  });
     return res.status(409).json({
       success: false,
       message: "User already exists"});
 }
 
 if (error.message === "ORGANIZATION_ALREADY_EXISTS") {
+      logWarn("register_failed", {
+    email,
+     reason: "organization_already_exists",
+    message: "Registration failed because organization already exists",
+  });
   return res.status(409).json({
     success: false,
     message: "Organization already exists",

@@ -5,52 +5,66 @@ import RefreshToken from "../models/refresh-token.model.js";
 import {hashToken } from "../utils/token.util.js";
 import { issueTokens } from "../utils/token.util.js";
 import { logWarn, logError, logInfo } from "../utils/logger.util.js";
+import mongoose from "mongoose";
 
 export const createOrganizationWithOwner= async({name,email,password,organizationName,companyDomain }) => {
-    const existingUser = await User.findOne({email});
-    if(existingUser){
-       logWarn("register_failed", {
-    email,
-    reason: "user_already_exists",
-    message: "Registration failed due to duplicate user",
-  });
+    const session = await mongoose.startSession();
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+
+  try {
+    let createdUser;
+
+    await session.withTransaction(async () => {
+     const [organization] = await Organization.create(
+        [
+          {
+            name: organizationName,
+            companyDomain,
+            ownerId: null,
+            status: "active",
+          },
+        ],
+        { session }
+      );
+
+      const [user] = await User.create(
+        [
+          {
+            name,
+            email,
+            password: hashedPassword,
+            role: "owner",
+            organizationId: organization._id,
+          },
+        ],
+        { session }
+      );
+  
+      organization.ownerId = user._id;
+      await organization.save({ session });
+
+      createdUser = user;
+    });
+
+    return createdUser;
+  } catch (error) {
+    if (error.code === 11000) {
+      if (error.keyPattern?.email) {
         throw new Error("USER_EXISTS");
-    }
-
-const existingOrganization = await Organization.findOne({companyDomain});
-
-if (existingOrganization) {
-       logWarn("register_failed", {
-    email,
-     reason: "organization_already_exists",
-    message: "Registration failed because organization already exists",
-  });
+      }
+      if (error.keyPattern?.companyDomain) {
         throw new Error("ORGANIZATION_ALREADY_EXISTS");
+      }
     }
 
-
-    const  hashedPassword  = await bcrypt.hash(password,10);
-
-const organization = await Organization.create({
-    name: organizationName,
-    ownerId: null,
-    status: "active",
-    companyDomain:companyDomain,
-  });
-   
- const user = await User.create({
-  name,
-  email,
-  password: hashedPassword,
-   role: "owner",
-   organizationId: organization._id,
-
-});
-organization.ownerId = user._id;
-  await organization.save();
-
-   return user;
+    throw error;
+  } finally {
+    session.endSession();
+  }
 };
+
 
  
 
