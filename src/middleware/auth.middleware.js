@@ -6,7 +6,6 @@ export const authMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
-    // 1. Header must exist
     if (!authHeader) {
       logWarn("auth_header_missing", {
   reason: "authorization_header_missing",
@@ -17,7 +16,6 @@ export const authMiddleware = async (req, res, next) => {
       });
     }
 
-    // 2. Strict format check: "Bearer <token>"
     const parts = authHeader.split(" ");
 
     if (parts.length !== 2 || parts[0] !== "Bearer" || !parts[1]) {
@@ -32,10 +30,10 @@ export const authMiddleware = async (req, res, next) => {
 
     const token = parts[1];
 
-    // 3. Verify token
+    
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // 4. Validate payload
+    
     if (!decoded.userId) {
     logWarn("jwt_verification_failed", {
     reason: "missing_userId_in_payload",
@@ -46,12 +44,10 @@ export const authMiddleware = async (req, res, next) => {
       });
     }
 
-    // 5. Fetch user (source of truth)
-    //Add org_id later
-    const user = await User.findById(decoded.userId)
-      .select("_id role");
+ const user = await User.findById(decoded.userId)
+  .select("_id role organizationId").lean();
 
-    // 6. Validate user
+    
     if (!user ) {
       logWarn("unauthorized_access_attempt", {
   reason: "user_not_found",
@@ -61,17 +57,23 @@ export const authMiddleware = async (req, res, next) => {
         message: "Unauthorized",
       });
     }
+if (!user.organizationId) {
+  logWarn("unauthorized_access_attempt", {
+    reason: "user_without_organization",
+  });
 
-    // 7. Attach trusted user data
-     //Add org_id later
+  return res.status(401).json({
+    success: false,
+    message: "Unauthorized",
+  });
+}
     req.user = {
       userId: user._id,
       role: user.role,
+      organizationId: user.organizationId,
     };
-
-    // 8. Continue request
+  
     next();
-
   }
  catch (error) {
   if (
