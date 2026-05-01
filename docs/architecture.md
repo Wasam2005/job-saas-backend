@@ -14,6 +14,8 @@ Middleware Layer
    ↓
 Service Layer
    ↓
+Repository Layer  
+   ↓
 Cache Layer (Redis - planned)
    ↓
 Database Layer (MongoDB)
@@ -157,7 +159,21 @@ All business logic resides here.
 
 -------------------------------------------------------------------
 
-## 6. Cache Layer (Redis — Planned)
+### 6. Repository Layer (Data Access Engine)
+
+All database interaction and data persistence logic resides here.
+
+**Examples:**
+
+* CRUD operations for users, organizations, tokens
+* Query construction (filters, pagination, aggregation)
+* Data access abstraction (MongoDB, Redis caching integration)
+
+> This layer isolates data access from business logic and controls how data is read, written, and optimized.
+
+-------------------------------------------------------------------
+
+## 7. Cache Layer (Redis — Planned)
 
 **Purpose:**
 
@@ -175,7 +191,7 @@ All business logic resides here.
 
 -------------------------------------------------------------------
 
-## 7. Database Layer (MongoDB)
+## 8. Database Layer (MongoDB)
 
 **Role:**
 
@@ -188,7 +204,7 @@ All business logic resides here.
 
 -------------------------------------------------------------------
 
-## 8. Queue Layer (BullMQ — Planned)
+## 9. Queue Layer (BullMQ — Planned)
 
 Handles asynchronous processing outside request-response cycle.
 
@@ -206,7 +222,7 @@ API → Queue → Worker
 
 -------------------------------------------------------------------
 
-## 9. Workers & Background Jobs
+## 10. Workers & Background Jobs
 
 **Includes:**
 

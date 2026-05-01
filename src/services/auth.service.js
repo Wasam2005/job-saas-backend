@@ -2,10 +2,13 @@ import bcrypt from "bcrypt";
 import User from "../models/user.model.js";
 import Organization from "../models/organization.model.js";
 import RefreshToken from "../models/refresh-token.model.js";
-import {hashToken } from "../utils/token.util.js";
-import { issueTokens } from "../utils/token.util.js";
+import {hashToken , issueTokens } from "../utils/token.util.js";
 import { logWarn, logError, logInfo } from "../utils/logger.util.js";
 import mongoose from "mongoose";
+import { createOrganization, updateOrganizationOwner } from "../repositories/organization.repository.js";
+import { createUser, findUserByEmail , findUserById} from "../repositories/user.repository.js";
+import { createRefreshToken, findRefreshToken,deleteRefreshTokenById } from "../repositories/refresh-token.repository.js";
+
 
 export const createOrganizationWithOwner= async({name,email,password,organizationName,companyDomain }) => {
     const session = await mongoose.startSession();
@@ -17,34 +20,28 @@ export const createOrganizationWithOwner= async({name,email,password,organizatio
     let createdUser;
 
     await session.withTransaction(async () => {
-     const [organization] = await Organization.create(
-        [
-          {
-            name: organizationName,
-            companyDomain,
-            ownerId: null,
-            status: "active",
-          },
-        ],
-        { session }
-      );
+    const [organization] = await createOrganization(
+  {
+    name: organizationName,
+    companyDomain,
+    ownerId: null,
+    status: "active",
+  },
+  session
+);
 
-      const [user] = await User.create(
-        [
-          {
-            name,
-            email,
-            password: hashedPassword,
-            role: "owner",
-            organizationId: organization._id,
-          },
-        ],
-        { session }
-      );
-  
-      organization.ownerId = user._id;
-      await organization.save({ session });
+const [user] = await createUser(
+  {
+    name,
+    email,
+    password: hashedPassword,
+    role: "owner",
+    organizationId: organization._id,
+  },
+  session
+);
 
+await updateOrganizationOwner(organization, user._id, session);
       createdUser = user;
     });
 
@@ -69,7 +66,7 @@ export const createOrganizationWithOwner= async({name,email,password,organizatio
  
 
 export const authenticateUser = async ({ email, password }) => {
-  const existingUser = await User.findOne({ email });
+  const existingUser = await findUserByEmail(email);
  if (!existingUser) {
   logWarn("login_auth_failed", {
   email,
@@ -92,7 +89,7 @@ export const authenticateUser = async ({ email, password }) => {
 
 const {accessToken,rawRefreshToken,hashedToken,expiresAt} = issueTokens(existingUser._id);
 
-await RefreshToken.create({
+await createRefreshToken({
   userId: existingUser._id,
   token: hashedToken,
   expiresAt,
@@ -108,9 +105,7 @@ return {
 export const refreshTokenService = async (refreshToken) => {
   const hashedIncomingToken = hashToken(refreshToken);
 
-  const existingToken = await RefreshToken.findOne({
-    token: hashedIncomingToken,
-  });
+const existingToken = await findRefreshToken(hashedIncomingToken);
 
   if (!existingToken) {
       logWarn("refresh_token_reuse_detected", {
@@ -120,7 +115,7 @@ export const refreshTokenService = async (refreshToken) => {
 
     throw new Error("UNAUTHORIZED");
   }
-  const user = await User.findById(existingToken.userId);
+const user = await findUserById(existingToken.userId);
 
 if (!user){
    logWarn("refresh_user_not_found", {
@@ -137,20 +132,20 @@ if (!user){
     reason: "refresh_token_expired",
   });
 
-    await RefreshToken.deleteOne({ _id: existingToken._id });
+    await deleteRefreshTokenById(existingToken._id);
     throw new Error("EXPIRED");
   }
 
   // Refresh Token Rotation (Later implement transaction to avoid race condition)
-  await RefreshToken.deleteOne({ _id: existingToken._id });
+    await deleteRefreshTokenById(existingToken._id);
 
   const {accessToken,rawRefreshToken,hashedToken,expiresAt} =issueTokens(user._id);
 
-  await RefreshToken.create({
-    userId:user._id,
-    token: hashedToken,
-    expiresAt,
-  });
+ await createRefreshToken({
+  userId: user._id,
+  token: hashedToken,
+  expiresAt,
+});
 logInfo("refresh_token_rotated", {
   userId: user._id,
   message: "Refresh token rotated successfully",

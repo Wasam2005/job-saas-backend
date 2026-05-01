@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
 import { logWarn, logError, logInfo } from "../utils/logger.util.js";
+import { findUserForAuth } from "../repositories/user.repository.js";
 
 export const authMiddleware = async (req, res, next) => {
   try {
@@ -44,8 +45,7 @@ export const authMiddleware = async (req, res, next) => {
       });
     }
 
- const user = await User.findById(decoded.userId)
-  .select("_id role organizationId").lean();
+const user = await findUserForAuth(decoded.userId);
 
     
     if (!user ) {

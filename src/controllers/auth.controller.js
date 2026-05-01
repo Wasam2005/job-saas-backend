@@ -28,6 +28,8 @@ if(error.message==="USER_EXISTS"){
       message: "User already exists"});
 }
 
+
+
 if (error.message === "ORGANIZATION_ALREADY_EXISTS") {
       logWarn("register_failed", {
     email,
@@ -38,6 +40,13 @@ if (error.message === "ORGANIZATION_ALREADY_EXISTS") {
     success: false,
     message: "Organization already exists",
   });
+}
+
+if (error.message === "SESSION_REQUIRED") {
+      logWarn("register_failed", {
+  email,
+  reason: "session_missing",
+});
 }
 
 logError("register_server_error", {
@@ -72,6 +81,7 @@ logInfo("login_success", {
       success: true,
       data: {
         accessToken,
+         refreshToken
       },
       message: "User logged in successfully",
     });

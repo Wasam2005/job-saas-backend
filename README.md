@@ -57,7 +57,7 @@ This ensures:
 ### Backend Architecture
 
 ```
-Routes → Controllers → Services → Database
+Routes → Controllers → Services → Repositories → Database
            ↓
        Middleware
  (Auth, RBAC, Validation)
